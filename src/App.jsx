@@ -1,70 +1,61 @@
+import { useState, useEffect } from 'react'
+import Hero from './components/Hero'
+import Catalog from './components/Catalog'
+import TryOnWorkbench from './components/TryOnWorkbench'
+
+const API_BASE = import.meta.env.VITE_BACKEND_URL || ''
+
 function App() {
+  const [showBuilder, setShowBuilder] = useState(false)
+  const [selections, setSelections] = useState({ accessory_ids: [] })
+  const [seeded, setSeeded] = useState(false)
+
+  useEffect(() => {
+    // Seed some demo items if catalog empty (one-time best-effort)
+    async function seed() {
+      try {
+        const res = await fetch(`${API_BASE}/api/items`)
+        const items = await res.json()
+        if (Array.isArray(items) && items.length === 0) {
+          const demo = [
+            { name: 'Classic White Tee', brand: 'LookLab', category: 'top', price: 24, image_url: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop' },
+            { name: 'Navy Blazer', brand: 'LookLab', category: 'top', price: 129, image_url: 'https://images.unsplash.com/photo-1520975922284-9d06a1f30b15?q=80&w=800&auto=format&fit=crop' },
+            { name: 'Black Jeans', brand: 'LookLab', category: 'bottom', price: 59, image_url: 'https://images.unsplash.com/photo-1516826957135-700dedea698c?q=80&w=800&auto=format&fit=crop' },
+            { name: 'Beige Chinos', brand: 'LookLab', category: 'bottom', price: 54, image_url: 'https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=800&auto=format&fit=crop' },
+            { name: 'White Sneakers', brand: 'LookLab', category: 'shoes', price: 79, image_url: 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?q=80&w=800&auto=format&fit=crop' },
+            { name: 'Leather Belt', brand: 'LookLab', category: 'accessory', price: 35, image_url: 'https://images.unsplash.com/photo-1620799139504-5f99b51d82ad?q=80&w=800&auto=format&fit=crop' },
+            { name: 'City Loft', brand: 'LookLab', category: 'background', price: 0, image_url: 'https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop' },
+          ]
+          await Promise.all(demo.map(async (d) => {
+            await fetch(`${API_BASE}/api/items`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d) })
+          }))
+        }
+      } catch (e) {
+        console.warn('Seed skipped', e)
+      } finally {
+        setSeeded(true)
+      }
+    }
+    if (!seeded) seed()
+  }, [seeded])
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-blue-100">
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-12">
+        <Hero onStart={() => setShowBuilder(true)} />
 
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
-            </div>
+        {showBuilder && (
+          <>
+            <TryOnWorkbench />
+            <Catalog selections={selections} setSelections={setSelections} />
+          </>
+        )}
 
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
+        {!showBuilder && (
+          <div className="text-center opacity-80">
+            <p>Use the button above to start a try‑on. A small demo catalog will auto‑populate for testing.</p>
           </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   )
